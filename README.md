@@ -1,6 +1,6 @@
-# BytStock
+# ByteStock
 
-BytStock é um sistema web de controle de estoque de hardware, desenvolvido como projeto para o Etec Portas Abertas.
+ByteStock é um sistema web de controle de estoque de hardware, desenvolvido como projeto para o Etec Portas Abertas.
 
 O sistema tem como objetivo permitir o cadastro e gerenciamento de produtos de hardware, além do controle de entrada e saída de itens do estoque.
 
