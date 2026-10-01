@@ -1,10 +1,11 @@
 package bytestock.service;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import bytestock.entity.Movimentacao;
 import bytestock.entity.Produto;
@@ -20,26 +21,22 @@ public class MovimentacaoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
+    @Transactional
     public void registrarEntrada(Long produtoId, Integer quantidade) {
-
         Produto produto = produtoRepository.findById(produtoId).orElse(null);
 
-        if (produto == null) {
+        if (produto == null || quantidade == null || quantidade <= 0) {
             return;
         }
 
-        if (quantidade <= 0) {
-        return;
-       }
+        int estoqueAtual = produto.getQuantidade() == null
+                ? 0
+                : produto.getQuantidade();
 
-        produto.setQuantidade(
-            produto.getQuantidade() + quantidade
-        );
-
+        produto.setQuantidade(estoqueAtual + quantidade);
         produtoRepository.save(produto);
 
         Movimentacao movimentacao = new Movimentacao();
-
         movimentacao.setTipo("ENTRADA");
         movimentacao.setQuantidade(quantidade);
         movimentacao.setData(LocalDateTime.now());
@@ -48,45 +45,42 @@ public class MovimentacaoService {
         movimentacaoRepository.save(movimentacao);
     }
 
+    @Transactional
     public void registrarSaida(Long produtoId, Integer quantidade) {
+        Produto produto = produtoRepository.findById(produtoId).orElse(null);
 
-    Produto produto = produtoRepository.findById(produtoId).orElse(null);
+        if (produto == null || quantidade == null || quantidade <= 0) {
+            return;
+        }
 
-    if (produto == null) {
-        return;
+        int estoqueAtual = produto.getQuantidade() == null
+                ? 0
+                : produto.getQuantidade();
+
+        if (quantidade > estoqueAtual) {
+            return;
+        }
+
+        produto.setQuantidade(estoqueAtual - quantidade);
+        produtoRepository.save(produto);
+
+        Movimentacao movimentacao = new Movimentacao();
+        movimentacao.setTipo("SAIDA");
+        movimentacao.setQuantidade(quantidade);
+        movimentacao.setData(LocalDateTime.now());
+        movimentacao.setProduto(produto);
+
+        movimentacaoRepository.save(movimentacao);
     }
 
-    if (quantidade <= 0) {
-        return;
+    @Transactional(readOnly = true)
+    public List<Movimentacao> listarPorProduto(Long produtoId) {
+        Produto produto = produtoRepository.findById(produtoId).orElse(null);
+
+        if (produto == null) {
+            return List.of();
+        }
+
+        return movimentacaoRepository.findByProdutoOrderByDataDesc(produto);
     }
-
-    if (quantidade > produto.getQuantidade()) {
-        return;
-    }
-
-    produto.setQuantidade(
-        produto.getQuantidade() - quantidade
-    );
-
-    produtoRepository.save(produto);
-
-    Movimentacao movimentacao = new Movimentacao();
-
-    movimentacao.setTipo("SAIDA");
-    movimentacao.setQuantidade(quantidade);
-    movimentacao.setData(LocalDateTime.now());
-    movimentacao.setProduto(produto);
-
-    movimentacaoRepository.save(movimentacao);
-  }
-  public List<Movimentacao> listarPorProduto(Long produtoId) {
-
-    Produto produto = produtoRepository.findById(produtoId).orElse(null);
-
-    if (produto == null) {
-        return List.of();
-    }
-
-    return movimentacaoRepository.findByProduto(produto);
-}
 }
