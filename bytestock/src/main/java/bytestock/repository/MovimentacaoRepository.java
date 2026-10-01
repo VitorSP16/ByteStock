@@ -9,7 +9,7 @@ import bytestock.entity.Produto;
 
 public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long> {
 
-    List<Movimentacao> findByProduto(Produto produto);
+    List<Movimentacao> findByProdutoOrderByDataDesc(Produto produto);
 
     void deleteByProduto(Produto produto);
 }
