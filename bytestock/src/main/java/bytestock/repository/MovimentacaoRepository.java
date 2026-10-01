@@ -11,5 +11,5 @@ public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long
 
     List<Movimentacao> findByProduto(Produto produto);
 
-   
+    void deleteByProduto(Produto produto);
 }
