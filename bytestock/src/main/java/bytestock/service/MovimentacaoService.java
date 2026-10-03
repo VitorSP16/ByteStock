@@ -3,7 +3,6 @@ package bytestock.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +14,13 @@ import bytestock.repository.ProdutoRepository;
 @Service
 public class MovimentacaoService {
 
-    @Autowired
-    private MovimentacaoRepository movimentacaoRepository;
+    private final MovimentacaoRepository movimentacaoRepository;
+    private final ProdutoRepository produtoRepository;
 
-    @Autowired
-    private ProdutoRepository produtoRepository;
+    public MovimentacaoService(MovimentacaoRepository movimentacaoRepository, ProdutoRepository produtoRepository) {
+        this.movimentacaoRepository = movimentacaoRepository;
+        this.produtoRepository = produtoRepository;
+    }
 
     @Transactional
     public void registrarEntrada(Long produtoId, Integer quantidade) {
@@ -29,9 +30,7 @@ public class MovimentacaoService {
             return;
         }
 
-        int estoqueAtual = produto.getQuantidade() == null
-                ? 0
-                : produto.getQuantidade();
+        int estoqueAtual = produto.getQuantidade() == null ? 0 : produto.getQuantidade();
 
         produto.setQuantidade(estoqueAtual + quantidade);
         produtoRepository.save(produto);
@@ -53,9 +52,7 @@ public class MovimentacaoService {
             return;
         }
 
-        int estoqueAtual = produto.getQuantidade() == null
-                ? 0
-                : produto.getQuantidade();
+        int estoqueAtual = produto.getQuantidade() == null ? 0 : produto.getQuantidade();
 
         if (quantidade > estoqueAtual) {
             return;
@@ -82,5 +79,33 @@ public class MovimentacaoService {
         }
 
         return movimentacaoRepository.findByProdutoOrderByDataDesc(produto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Movimentacao> listarTodas() {
+        return movimentacaoRepository.findAllByOrderByDataDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Movimentacao> listarUltimas(int limite) {
+        return movimentacaoRepository.findTop5ByOrderByDataDesc().stream()
+                .limit(Math.max(0, limite))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public int totalEntradas() {
+        return listarTodas().stream()
+                .filter(mov -> "ENTRADA".equals(mov.getTipo()))
+                .mapToInt(Movimentacao::getQuantidade)
+                .sum();
+    }
+
+    @Transactional(readOnly = true)
+    public int totalSaidas() {
+        return listarTodas().stream()
+                .filter(mov -> "SAIDA".equals(mov.getTipo()))
+                .mapToInt(Movimentacao::getQuantidade)
+                .sum();
     }
 }
