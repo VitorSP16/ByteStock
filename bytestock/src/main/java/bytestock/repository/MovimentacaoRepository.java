@@ -11,5 +11,9 @@ public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long
 
     List<Movimentacao> findByProdutoOrderByDataDesc(Produto produto);
 
+    List<Movimentacao> findAllByOrderByDataDesc();
+
+    List<Movimentacao> findTop5ByOrderByDataDesc();
+
     void deleteByProduto(Produto produto);
 }
