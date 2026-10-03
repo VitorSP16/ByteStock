@@ -2,18 +2,24 @@
 
 ByteStock é um sistema web de controle de estoque de hardware, desenvolvido como projeto para o Etec Portas Abertas.
 
-O sistema permite cadastrar e gerenciar produtos de hardware, além de controlar entradas, saídas e o histórico do estoque.
+O sistema permite cadastrar e gerenciar produtos de hardware, controlar entradas e saídas e acompanhar indicadores do estoque.
 
-## Funcionalidades
+## Áreas do sistema
 
-- Cadastro de produtos
-- Listagem de produtos
-- Edição de produtos
-- Exclusão de produtos
-- Entrada de produtos no estoque
-- Saída de produtos do estoque
-- Histórico de movimentações
-- Controle de estoque mínimo
+- **Dashboard:** quantidade de produtos, total de unidades, itens com estoque baixo, valor estimado do estoque e movimentações recentes.
+- **Produtos:** listagem completa com busca e filtros.
+- **Novo produto:** cadastro de componentes e quantidade inicial.
+- **Estoque baixo:** lista automática dos produtos que precisam de reposição.
+- **Movimentações:** histórico geral de entradas e saídas.
+- **Relatórios:** resumo por categoria, fluxo de estoque, valor total e itens críticos.
+- **Histórico por produto:** movimentações individuais de cada item.
+
+## Regras de estoque
+
+- A quantidade inicial de um produto novo é registrada como uma entrada.
+- Depois do cadastro, a quantidade não é alterada diretamente na edição.
+- Alterações de estoque devem ser feitas pelas telas de **Entrada** e **Saída**, preservando o histórico.
+- Não é permitida saída maior do que a quantidade disponível.
 
 ## Tecnologias utilizadas
 
@@ -42,9 +48,9 @@ O sistema permite cadastrar e gerenciar produtos de hardware, além de controlar
 
 ## Como executar
 
-Entre na pasta do projeto:
+Entre na pasta Java do projeto:
 
-```bash
+```powershell
 cd bytestock
 ```
 
