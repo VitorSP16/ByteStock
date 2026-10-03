@@ -22,51 +22,76 @@ public class MovimentacaoService {
         this.produtoRepository = produtoRepository;
     }
 
-    @Transactional
-    public void registrarEntrada(Long produtoId, Integer quantidade) {
-        Produto produto = produtoRepository.findById(produtoId).orElse(null);
-
-        if (produto == null || quantidade == null || quantidade <= 0) {
-            return;
+    public record ResultadoMovimentacao(boolean sucesso, String mensagem) {
+        public static ResultadoMovimentacao ok(String mensagem) {
+            return new ResultadoMovimentacao(true, mensagem);
         }
 
-        int estoqueAtual = produto.getQuantidade() == null ? 0 : produto.getQuantidade();
-
-        produto.setQuantidade(estoqueAtual + quantidade);
-        produtoRepository.save(produto);
-
-        Movimentacao movimentacao = new Movimentacao();
-        movimentacao.setTipo("ENTRADA");
-        movimentacao.setQuantidade(quantidade);
-        movimentacao.setData(LocalDateTime.now());
-        movimentacao.setProduto(produto);
-
-        movimentacaoRepository.save(movimentacao);
+        public static ResultadoMovimentacao erro(String mensagem) {
+            return new ResultadoMovimentacao(false, mensagem);
+        }
     }
 
     @Transactional
-    public void registrarSaida(Long produtoId, Integer quantidade) {
-        Produto produto = produtoRepository.findById(produtoId).orElse(null);
+    public ResultadoMovimentacao registrarEntrada(Long produtoId, Integer quantidade) {
+        if (quantidade == null || quantidade <= 0) {
+            return ResultadoMovimentacao.erro("A quantidade de entrada deve ser maior que zero.");
+        }
 
-        if (produto == null || quantidade == null || quantidade <= 0) {
-            return;
+        Produto produto = produtoRepository.buscarPorIdParaMovimentacao(produtoId).orElse(null);
+        if (produto == null) {
+            return ResultadoMovimentacao.erro("Produto não encontrado.");
+        }
+
+        int estoqueAtual = produto.getQuantidade() == null ? 0 : produto.getQuantidade();
+        long novoEstoque = (long) estoqueAtual + quantidade;
+
+        if (novoEstoque > Integer.MAX_VALUE) {
+            return ResultadoMovimentacao.erro("A quantidade informada é muito alta.");
+        }
+
+        produto.setQuantidade((int) novoEstoque);
+        produtoRepository.save(produto);
+
+        salvarMovimentacao(produto, "ENTRADA", quantidade);
+
+        return ResultadoMovimentacao.ok(
+                "Entrada de " + quantidade + " unidade(s) registrada com sucesso.");
+    }
+
+    @Transactional
+    public ResultadoMovimentacao registrarSaida(Long produtoId, Integer quantidade) {
+        if (quantidade == null || quantidade <= 0) {
+            return ResultadoMovimentacao.erro("A quantidade de saída deve ser maior que zero.");
+        }
+
+        Produto produto = produtoRepository.buscarPorIdParaMovimentacao(produtoId).orElse(null);
+        if (produto == null) {
+            return ResultadoMovimentacao.erro("Produto não encontrado.");
         }
 
         int estoqueAtual = produto.getQuantidade() == null ? 0 : produto.getQuantidade();
 
         if (quantidade > estoqueAtual) {
-            return;
+            return ResultadoMovimentacao.erro(
+                    "Estoque insuficiente. Disponível: " + estoqueAtual + " unidade(s).");
         }
 
         produto.setQuantidade(estoqueAtual - quantidade);
         produtoRepository.save(produto);
 
+        salvarMovimentacao(produto, "SAIDA", quantidade);
+
+        return ResultadoMovimentacao.ok(
+                "Saída de " + quantidade + " unidade(s) registrada com sucesso.");
+    }
+
+    private void salvarMovimentacao(Produto produto, String tipo, Integer quantidade) {
         Movimentacao movimentacao = new Movimentacao();
-        movimentacao.setTipo("SAIDA");
+        movimentacao.setTipo(tipo);
         movimentacao.setQuantidade(quantidade);
         movimentacao.setData(LocalDateTime.now());
         movimentacao.setProduto(produto);
-
         movimentacaoRepository.save(movimentacao);
     }
 
@@ -88,14 +113,18 @@ public class MovimentacaoService {
 
     @Transactional(readOnly = true)
     public List<Movimentacao> listarUltimas(int limite) {
-        return movimentacaoRepository.findTop5ByOrderByDataDesc().stream()
-                .limit(Math.max(0, limite))
+        if (limite <= 0) {
+            return List.of();
+        }
+
+        return movimentacaoRepository.findAllByOrderByDataDesc().stream()
+                .limit(limite)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public int totalEntradas() {
-        return listarTodas().stream()
+        return movimentacaoRepository.findAllByOrderByDataDesc().stream()
                 .filter(mov -> "ENTRADA".equals(mov.getTipo()))
                 .mapToInt(Movimentacao::getQuantidade)
                 .sum();
@@ -103,7 +132,7 @@ public class MovimentacaoService {
 
     @Transactional(readOnly = true)
     public int totalSaidas() {
-        return listarTodas().stream()
+        return movimentacaoRepository.findAllByOrderByDataDesc().stream()
                 .filter(mov -> "SAIDA".equals(mov.getTipo()))
                 .mapToInt(Movimentacao::getQuantidade)
                 .sum();
