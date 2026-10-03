@@ -1,6 +1,5 @@
 package bytestock.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +7,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import bytestock.entity.Produto;
 import bytestock.service.ProdutoService;
@@ -16,13 +16,31 @@ import bytestock.service.ProdutoService;
 @Controller
 public class ProdutoController {
 
-    @Autowired
-    private ProdutoService produtoService;
+    private final ProdutoService produtoService;
+
+    public ProdutoController(ProdutoService produtoService) {
+        this.produtoService = produtoService;
+    }
 
     @GetMapping
-    public String listarProdutos(Model model) {
-        model.addAttribute("produtos", produtoService.listarTodos());
+    public String listarProdutos(
+            @RequestParam(required = false) String busca,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String status,
+            Model model) {
+
+        model.addAttribute("produtos", produtoService.filtrar(busca, categoria, status));
+        model.addAttribute("categorias", produtoService.listarCategorias());
+        model.addAttribute("busca", busca == null ? "" : busca);
+        model.addAttribute("categoriaSelecionada", categoria == null ? "" : categoria);
+        model.addAttribute("statusSelecionado", status == null ? "" : status);
         return "produtos/lista";
+    }
+
+    @GetMapping("/estoque-baixo")
+    public String estoqueBaixo(Model model) {
+        model.addAttribute("produtos", produtoService.listarEstoqueBaixo());
+        return "produtos/estoque-baixo";
     }
 
     @GetMapping("/novo")
@@ -49,10 +67,7 @@ public class ProdutoController {
 
     @GetMapping("/excluir/{id}")
     public String excluirProduto(@PathVariable Long id) {
-        Produto produto = produtoService.buscarPorId(id);
-        if (produto != null) {
-            produtoService.excluir(id);
-        }
+        produtoService.excluir(id);
         return "redirect:/produtos";
     }
 }
