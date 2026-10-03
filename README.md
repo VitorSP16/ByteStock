@@ -2,7 +2,7 @@
 
 ByteStock é um sistema web de controle de estoque de hardware, desenvolvido como projeto para o Etec Portas Abertas.
 
-O sistema tem como objetivo permitir o cadastro e gerenciamento de produtos de hardware, além do controle de entrada e saída de itens do estoque.
+O sistema permite cadastrar e gerenciar produtos de hardware, além de controlar entradas, saídas e o histórico do estoque.
 
 ## Funcionalidades
 
@@ -29,7 +29,9 @@ O sistema tem como objetivo permitir o cadastro e gerenciamento de produtos de h
 
 ### Banco de dados
 
-- PostgreSQL
+- H2 em modo arquivo (embutido e persistente)
+- Não precisa instalar PostgreSQL ou usar pgAdmin
+- Os dados ficam salvos localmente em `bytestock/data/bytestock.mv.db`
 
 ### Front-end
 
@@ -37,6 +39,28 @@ O sistema tem como objetivo permitir o cadastro e gerenciamento de produtos de h
 - CSS
 - Bootstrap
 - Thymeleaf
+
+## Como executar
+
+Entre na pasta do projeto:
+
+```bash
+cd bytestock
+```
+
+No Windows:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Depois acesse:
+
+```text
+http://localhost:8080
+```
+
+O banco é criado automaticamente na primeira execução. Ao fechar e abrir o sistema novamente, os produtos e movimentações continuam salvos.
 
 ## Estrutura do Back-end
 
