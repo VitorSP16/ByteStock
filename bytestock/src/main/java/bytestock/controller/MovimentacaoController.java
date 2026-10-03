@@ -1,6 +1,5 @@
 package bytestock.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +14,21 @@ import bytestock.service.ProdutoService;
 @Controller
 public class MovimentacaoController {
 
-    @Autowired
-    private MovimentacaoService movimentacaoService;
+    private final MovimentacaoService movimentacaoService;
+    private final ProdutoService produtoService;
 
-    @Autowired
-    private ProdutoService produtoService;
+    public MovimentacaoController(MovimentacaoService movimentacaoService, ProdutoService produtoService) {
+        this.movimentacaoService = movimentacaoService;
+        this.produtoService = produtoService;
+    }
+
+    @GetMapping("/movimentacoes")
+    public String listarTodas(Model model) {
+        model.addAttribute("movimentacoes", movimentacaoService.listarTodas());
+        model.addAttribute("totalEntradas", movimentacaoService.totalEntradas());
+        model.addAttribute("totalSaidas", movimentacaoService.totalSaidas());
+        return "movimentacoes/lista-geral";
+    }
 
     @GetMapping("/produtos/{id}/entrada")
     public String paginaEntrada(@PathVariable Long id, Model model) {
